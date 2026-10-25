@@ -14,7 +14,7 @@ test('seeding lays down soul, home, site avatar and memory, once', () => {
   const persona = loadPersona('dafeiyu')
   const paths = charaPaths(tmp(), 'dafeiyu')
   const created = seedChara(paths, persona.dir)
-  for (const p of [paths.soul, paths.aspiration, join(paths.site, 'index.html'), join(paths.site, 'avatar.svg'), paths.memory]) {
+  for (const p of [paths.soul, paths.aspiration, join(paths.site, 'index.html'), join(paths.site, 'avatar.png'), paths.memory]) {
     assert.ok(existsSync(p), `${p} seeded`)
   }
   assert.ok(created.length >= 5)

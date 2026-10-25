@@ -11,12 +11,12 @@
 // No @deepseek-ai/* imports: everything comes through ctx (see agent.js).
 import { randomBytes } from 'node:crypto'
 import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { extname, join } from 'node:path'
 import { atomicWrite, readText } from './lib/fsutil.js'
 import { seedChara, serveSiteFile } from './lib/home.js'
 import { clamp, sharedLife, MIN_PATIENCE, MAX_PATIENCE } from './lib/life.js'
 import { charaPaths, defaultRoot } from './lib/paths.js'
-import { loadPersona } from './lib/persona.js'
+import { AVATAR_TYPES, loadPersona } from './lib/persona.js'
 import { TaskStore } from './lib/tasks.js'
 
 export const name = 'dsh-chara'
@@ -33,7 +33,7 @@ export function apply(ctx, config = {}) {
 
   const persona = loadPersona(config.persona ?? 'dafeiyu')
   const paths = charaPaths(config.root ?? defaultRoot(), persona.id)
-  const created = seedChara(paths, persona.dir)
+  const created = seedChara(paths, persona.dir, persona.avatar)
   if (created.length > 0) log(`seeded ${created.length} file(s) for ${persona.name} at ${paths.base}`)
   const tasks = new TaskStore(paths.tasks)
   const life = sharedLife(paths.life, { persona, log })
@@ -159,9 +159,10 @@ export function apply(ctx, config = {}) {
     const { pathname } = new URL(req.url ?? '/', 'http://localhost')
     const route = pathname.slice(API.length) || '/'
     if (req.method === 'GET' && route === '/state') return sendJson(res, 200, stateView())
-    if (req.method === 'GET' && route === '/avatar.svg') {
-      res.writeHead(200, { 'content-type': 'image/svg+xml', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' })
-      res.end(readFileSync(join(persona.dir, 'avatar.svg')))
+    if (req.method === 'GET' && route === '/avatar') {
+      const type = AVATAR_TYPES[extname(persona.avatar).toLowerCase()]
+      res.writeHead(200, { 'content-type': type, 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' })
+      res.end(readFileSync(join(persona.dir, persona.avatar)))
       return
     }
     if (req.method !== 'POST') return sendJson(res, 404, { ok: false, error: 'not found' })

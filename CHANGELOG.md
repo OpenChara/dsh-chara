@@ -2,9 +2,12 @@
 
 ## Unreleased
 
-- 头像换成 DeepSeek 官方鲸鱼标志：来自 DeepSeek Harness 的 MIT 开源代码
-  （`FISH_LOGO_PATH`），NOTICE.md 附上 MIT 全文和商标说明。
-  The avatar is now DeepSeek's whale mark from DSH's MIT source.
+- 头像换成社区鲸鱼娘（裁自 xiaoweigen/deepseek-dafeiyu-assets 的 Q 版设定图，
+  CC BY-NC-SA 4.0，仅限非商业使用），署名链和上游许可见
+  `personas/dafeiyu/ART-LICENSE.md`；代码仍是 Apache-2.0。
+  The avatar is now the community whale-girl (CC BY-NC-SA 4.0, non-commercial).
+- 头像由 `persona.json` 的 `avatar` 声明（PNG / SVG / JPEG / WebP），
+  API 改为 `GET /api/chara/avatar`。
 
 ## 0.1.0 — 2026-10-25
 

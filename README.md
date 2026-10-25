@@ -13,7 +13,7 @@
 
 它跑在 DSH 自己的会话、工具、定时任务和权限体系上。插件只补 DSH 没有的那部分，不另造一套 harness。思路来自 [OpenCharaAgent](https://github.com/OpenChara/OpenCharaAgent)。
 
-> 非官方同人项目，与 DeepSeek 无关联，也未获其背书。头像用的是 DeepSeek Harness 开源代码（MIT）里的官方鲸鱼标志；不打包社区的二次元大肥鱼素材（多为不可商用）。详见 [NOTICE.md](NOTICE.md)。
+> 非官方同人项目，与 DeepSeek 无关联，也未获其背书。大肥鱼的头像是社区鲸鱼娘形象（原作 上善无形，女仆设计 ZipZipPipe，设定图 YunYueSama、xiaoweigen），按 CC BY-NC-SA 4.0 授权，仅限非商业使用，详见 [NOTICE.md](NOTICE.md)。
 
 | 大肥鱼的小窝（它自己的网站） | 设置 → 大肥鱼 |
 | --- | --- |
@@ -140,4 +140,6 @@ personas/dafeiyu/   大肥鱼：soul.md、aspiration.md、persona.json、头像�
 
 ## 许可
 
-Apache-2.0。头像里的鲸鱼来自 DeepSeek Harness（MIT，Copyright (c) 2026 DeepSeek），它也是 DeepSeek 的品牌标识，见 [NOTICE.md](NOTICE.md)。
+代码、人格文本和文档：Apache-2.0。
+
+大肥鱼的头像 `personas/dafeiyu/avatar.png`：CC BY-NC-SA 4.0，仅限非商业使用，署名和来源见 [ART-LICENSE.md](personas/dafeiyu/ART-LICENSE.md)。

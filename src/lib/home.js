@@ -9,7 +9,7 @@ import { atomicWrite, copyTreeIfMissing, ensureDir } from './fsutil.js'
  * own pages) is never overwritten.
  * @returns the paths created by this call.
  */
-export function seedChara(paths, personaDir) {
+export function seedChara(paths, personaDir, avatarFile = 'avatar.png') {
   const created = []
   ensureDir(paths.soulDir)
   ensureDir(paths.stateDir)
@@ -20,9 +20,9 @@ export function seedChara(paths, personaDir) {
     }
   }
   created.push(...copyTreeIfMissing(join(personaDir, 'home'), paths.home))
-  const avatar = join(paths.site, 'avatar.svg')
+  const avatar = join(paths.site, avatarFile)
   if (!existsSync(avatar)) {
-    copyFileSync(join(personaDir, 'avatar.svg'), avatar)
+    copyFileSync(join(personaDir, avatarFile), avatar)
     created.push(avatar)
   }
   if (!existsSync(paths.memory)) {

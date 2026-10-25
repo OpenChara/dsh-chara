@@ -88,7 +88,7 @@ window.__ModuleLoader__.load({
     }
 
     function Avatar({ size }) {
-      return h('img', { src: `${API}/avatar.svg`, alt: '', width: size, height: size, 'data-chara-avatar': '' })
+      return h('img', { src: `${API}/avatar`, alt: '', width: size, height: size, 'data-chara-avatar': '' })
     }
 
     function WakeButton() {

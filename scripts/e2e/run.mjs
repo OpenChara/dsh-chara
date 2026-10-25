@@ -258,6 +258,8 @@ async function main() {
   check('…and changed nothing', life().autonomy === true)
   const empty = await api('/soul', { method: 'POST', body: JSON.stringify({ text: '  ' }) })
   check('an empty soul is refused', empty.status === 400, empty.status)
+  const avatar = await api('/avatar')
+  check('the avatar is served as an image', avatar.status === 200 && avatar.headers.get('content-type') === 'image/png', avatar.headers.get('content-type'))
 
   console.log('\n[5] the website, read-only and sandboxed')
   const site = await rawGet(port, state.siteUrl)

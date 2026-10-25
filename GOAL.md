@@ -56,23 +56,24 @@
 
 ## 美术素材立场
 
-查证结果（2026-10-25 修订）：
+决定（2026-10-25 修订）：本项目不商用，头像直接用社区鲸鱼娘。
 
-- **DeepSeek 官方的鲸鱼标志**：DeepSeek Harness 仓库以 MIT 开源，Copyright (c) 2026 DeepSeek。鲸鱼轮廓 `FISH_LOGO_PATH` 在 `ui-primitives/src/FishLogo.tsx` 里公开导出，已发布的 `@deepseek-ai/dsh-web-frontend` 也带着它。版权上可以用，但它也是商标，MIT 不授权商标，要按 DSH 的《品牌素材使用规范》来：不让人误以为是官方出品或官方背书。
-- **社区二次元「大肥鱼 / 鲸鱼娘」**：xiaoweigen/deepseek-dafeiyu-assets、「鲸鱼娘·明月」等是 CC BY-NC-SA，不能商用；dsh-dafeiyu 早期的 BigFish 帧已归档，注明不在 MIT 范围内。
-- **`PC2005-cloud/dsh-pet` 的「鲸尾女仆」动画**：MIT，dsh-dafeiyu 现在用的就是它。
-
-因此：
-
-- 头像用官方鲸鱼标志：MIT 路径 + 浅色圆底 + 品牌蓝，NOTICE.md 里附上 MIT 全文和商标说明；
-- 不打包社区的二次元素材；
-- 动态形象交给用户另装的 `dsh-dafeiyu`（MIT 素材），两者通过 `session/event` 天然联动。
+- 素材：xiaoweigen/deepseek-dafeiyu-assets 的 Q 版基础设定图，正面头部裁成头像。
+- 授权链：
+  - 上善无形公开声明原创角色「溟月」按 CC BY-NC-SA 4.0 开放二创；
+  - ZipZipPipe 的女仆鲸鱼娘遵循同一协议，不可商用；
+  - YunYueSama 的 Q 版参考按《大肥鱼项目署名许可 1.0》，要求署名 + 随附全文；
+  - xiaoweigen 的改编按 CC BY-NC-SA 4.0。
+- 做法：
+  - 只有头像这张图按 CC BY-NC-SA 4.0，署名、修改记录、上游许可全文都放在 `personas/dafeiyu/ART-LICENSE.md`；
+  - 代码和其余内容保持 Apache-2.0。CC 协议不适合软件；把一张非商用图片和代码放在一起只是「汇编」，不构成代码对图片的「演绎」，相同方式共享不会传染到代码。dsh-dafeiyu、DeepSeek-whale-girl-3D 等社区项目也是这样分开授权的。
+- 动态形象交给用户另装的 `dsh-dafeiyu`，两者通过 `session/event` 天然联动。
 
 本插件是非官方的同人项目，与 DeepSeek 无关联，也未获其背书。
 
 ## 验收记录（2026-10-25，DSH 0.2.1-rc.2，云端 Linux，web profile）
 
-模型都用 `scripts/e2e/mock-llm.mjs` 这个脚本化 mock：它走 DSH 自带的 pi-ai 适配器，DSH 跑的是真实的回合，所以能断言模型实际收到的内容。端到端脚本 `npm run e2e` 每次跑 45 项检查，下面标「e2e」的条目由它覆盖；最后一次运行 45/45 通过。
+模型都用 `scripts/e2e/mock-llm.mjs` 这个脚本化 mock：它走 DSH 自带的 pi-ai 适配器，DSH 跑的是真实的回合，所以能断言模型实际收到的内容。端到端脚本 `npm run e2e` 每次跑 46 项检查，下面标「e2e」的条目由它覆盖；最后一次运行 46/46 通过。
 
 - **A1**
   - e2e：`--dump-config` 里有 `chara` 行和 `preset-chara-dafeiyu` 行；两次启动的输出都没有 error / warn。
@@ -116,7 +117,7 @@
     - 人格保存成功。
 - **A8**
   - `npm test`：40 项通过；
-  - `npm run e2e`：45/45；
+  - `npm run e2e`：46/46；
   - CI（`.github/workflows/ci.yml`）在 Node 22 和 24 上跑语法检查、清单检查和单元测试。
 
 **没验证的：** DSH 桌面版（它的 profile 由 Electron 应用管理，云端跑不起来）；真实 DeepSeek 模型上的长期运行表现。

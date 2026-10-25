@@ -13,7 +13,7 @@ Install this plugin and restart DSH, and a pinned 「大肥鱼」 session appear
 
 It runs on DSH's own sessions, tools, schedules and permissions. The plugin only adds what DSH lacks; it brings no second harness. The ideas come from [OpenCharaAgent](https://github.com/OpenChara/OpenCharaAgent).
 
-> An unofficial fan project, not affiliated with or endorsed by DeepSeek. The avatar is DeepSeek's official whale mark from DeepSeek Harness's MIT-licensed source; no community anime-style 大肥鱼 artwork (mostly non-commercial) is bundled. See [NOTICE.md](NOTICE.md).
+> An unofficial fan project, not affiliated with or endorsed by DeepSeek. The 大肥鱼 avatar is the community whale-girl character (original by 上善无形, maid design by ZipZipPipe, sheets by YunYueSama and xiaoweigen), licensed CC BY-NC-SA 4.0 for non-commercial use only; see [NOTICE.md](NOTICE.md).
 
 | Its home (its own website) | Settings → 大肥鱼 |
 | --- | --- |
@@ -140,4 +140,6 @@ personas/dafeiyu/   大肥鱼: soul.md, aspiration.md, persona.json, avatar, hom
 
 ## License
 
-Apache-2.0. The whale in the avatar comes from DeepSeek Harness (MIT, Copyright (c) 2026 DeepSeek) and is also DeepSeek's brand mark; see [NOTICE.md](NOTICE.md).
+Code, persona text and docs: Apache-2.0.
+
+The 大肥鱼 avatar, `personas/dafeiyu/avatar.png`: CC BY-NC-SA 4.0, non-commercial use only; attribution and sources in [ART-LICENSE.md](personas/dafeiyu/ART-LICENSE.md).

@@ -15,7 +15,7 @@ body {
   line-height: 1.7;
 }
 main { max-width: 640px; margin: 0 auto; padding: 40px 20px; }
-.avatar { width: 96px; height: 96px; display: block; }
+.avatar { width: 96px; height: 96px; display: block; border-radius: 50%; }
 h1 { margin: 12px 0 4px; }
 h2 { color: var(--accent); font-size: 1.1rem; margin-top: 28px; }
 .lead { opacity: .8; }
