@@ -1,0 +1,19 @@
+# Test-only overlay (dsh --patch): route the web profile's default model to the
+# scripted mock in mock-llm.mjs through DSH's pi-ai adapter. MOCK_LLM_PORT and
+# MOCK_LLM_KEY come from the e2e runner's environment.
+- id: llm-pi-ai
+  config:
+    providers:
+      mock:
+        displayName: Mock
+        api: openai-completions
+        baseURL: !!js "'http://127.0.0.1:' + process.env.MOCK_LLM_PORT + '/v1'"
+        apiKeyEnv: MOCK_LLM_KEY
+        models:
+          - id: mock-chara
+            name: Mock Chara
+            contextWindow: 128000
+- id: agent-default-model
+  config:
+    provider: mock
+    model: mock-chara

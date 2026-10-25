@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="大肥鱼">
+  <!-- Original artwork for dsh-chara (Apache-2.0). A round, front-facing whale;
+       intentionally unlike any official logo. -->
+  <defs>
+    <radialGradient id="body" cx="45%" cy="38%" r="70%">
+      <stop offset="0" stop-color="#8fc2ff"/>
+      <stop offset="1" stop-color="#3f7fe0"/>
+    </radialGradient>
+    <radialGradient id="belly" cx="50%" cy="40%" r="60%">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#dcecff"/>
+    </radialGradient>
+  </defs>
+  <!-- water spout -->
+  <path d="M64 30 C60 20 52 18 48 12 M64 30 C68 20 76 18 80 12 M64 30 L64 14"
+        fill="none" stroke="#7cc4ff" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="48" cy="12" r="3" fill="#7cc4ff"/>
+  <circle cx="80" cy="12" r="3" fill="#7cc4ff"/>
+  <circle cx="64" cy="12" r="3" fill="#7cc4ff"/>
+  <!-- side fins -->
+  <path d="M20 78 C8 74 6 86 16 92 C22 95 26 90 28 86 Z" fill="#3f7fe0"/>
+  <path d="M108 78 C120 74 122 86 112 92 C106 95 102 90 100 86 Z" fill="#3f7fe0"/>
+  <!-- body -->
+  <ellipse cx="64" cy="76" rx="46" ry="42" fill="url(#body)"/>
+  <ellipse cx="64" cy="92" rx="30" ry="22" fill="url(#belly)"/>
+  <!-- belly stripes -->
+  <path d="M46 88 Q64 94 82 88 M48 97 Q64 103 80 97" fill="none" stroke="#b9d6fb" stroke-width="2" stroke-linecap="round"/>
+  <!-- eyes -->
+  <ellipse cx="48" cy="68" rx="5.5" ry="7" fill="#1d2a44"/>
+  <ellipse cx="80" cy="68" rx="5.5" ry="7" fill="#1d2a44"/>
+  <circle cx="50" cy="65" r="2" fill="#fff"/>
+  <circle cx="82" cy="65" r="2" fill="#fff"/>
+  <!-- blush -->
+  <ellipse cx="38" cy="80" rx="6" ry="3.5" fill="#ff9fb8" opacity=".7"/>
+  <ellipse cx="90" cy="80" rx="6" ry="3.5" fill="#ff9fb8" opacity=".7"/>
+  <!-- smile -->
+  <path d="M58 79 Q64 85 70 79" fill="none" stroke="#1d2a44" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

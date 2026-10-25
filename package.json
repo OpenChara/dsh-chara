@@ -1,0 +1,69 @@
+{
+  "name": "dsh-chara",
+  "version": "0.1.0",
+  "description": "DSH 插件：让角色住进 DSH。大肥鱼有自己的家、理想和作息，会自己醒来做事、维护自己的网站和日记。",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "character",
+    "persona",
+    "companion",
+    "autonomous-agent"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OpenChara/dsh-chara.git"
+  },
+  "homepage": "https://github.com/OpenChara/dsh-chara#readme",
+  "bugs": {
+    "url": "https://github.com/OpenChara/dsh-chara/issues"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "src/host.js",
+  "exports": {
+    ".": "./src/host.js",
+    "./agent": "./src/agent.js",
+    "./client": "./client.js",
+    "./icon": "./personas/dafeiyu/avatar.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "client.js",
+    "personas",
+    "locale",
+    "cordis.patch.yml",
+    "README.md",
+    "README.en.md",
+    "GOAL.md",
+    "NOTICE.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "dsh": ">=0.2.1-rc.2",
+    "node": ">=22"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.js\"",
+    "e2e": "node scripts/e2e/run.mjs"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

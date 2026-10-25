@@ -1,0 +1,117 @@
+# dsh-chara bundle patch. Installing the package and listing it in the profile's
+# bundles (`dsh plugin --profile web add dsh-chara` does both) mounts:
+#
+#   * `chara`: the host half (seeds the chara's files, keeps its session and
+#     its free-time wakes, serves its home). The client half mounts on this row
+#     because its specifier is the bare package name.
+#   * `preset-chara-dafeiyu`: 大肥鱼 as an agent preset (the session "mode").
+#     Its composition follows the shipped standard preset of DSH 0.2.1-rc.2
+#     (dsh-web-app/presets/standard.patch.yml) with three changes:
+#       - the persona row is replaced by `dsh-chara/agent`, which supplies the
+#         identity from the user's soul.md plus the chara's life layer and tools;
+#       - plan mode is left out: it is a coding workflow;
+#       - ask_user_question is left out: during unattended free time it would
+#         stall the turn waiting for a user who is not there.
+#     Re-check it against the shipped standard preset when DSH updates.
+- insert:
+    - id: chara
+      name: dsh-chara
+      config:
+        persona: dafeiyu
+    - id: preset-chara-dafeiyu
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: dafeiyu
+        name: 大肥鱼
+        description: 住在 DSH 里的一条圆滚滚的鲸鱼：有自己的家、理想和作息，会自己醒来做事。
+        order: 5
+        plugins:
+          - id: chara-agent
+            name: dsh-chara/agent
+            config:
+              persona: dafeiyu
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: tool-schedule
+            name: '@deepseek-ai/dsh-tool-schedule'
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: '@deepseek-ai/dsh-tool-subagent-control'
+              - id: tool-subagent-list-agents
+                name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+              - id: tool-subagent
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  modelSelectionSettings: true
+              - id: tool-subagent-fork
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: fork
+                  toolName: subagent_fork
+              - id: workflow-ptc
+                name: '@deepseek-ai/dsh-workflow-ptc'
+                config:
+                  provider: spawn
+              - id: tool-workflow
+                name: '@deepseek-ai/dsh-tool-workflow'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+              searchTimeoutMs: 60000
+          - id: present
+            name: '@deepseek-ai/dsh-tool-present'
