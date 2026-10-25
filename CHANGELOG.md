@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- 头像换成 DeepSeek 官方鲸鱼标志：来自 DeepSeek Harness 的 MIT 开源代码
+  （`FISH_LOGO_PATH`），NOTICE.md 附上 MIT 全文和商标说明。
+  The avatar is now DeepSeek's whale mark from DSH's MIT source.
+
 ## 0.1.0 — 2026-10-25
 
 第一版：大肥鱼住进 DSH。First release: 大肥鱼 moves into DSH.

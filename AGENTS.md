@@ -47,4 +47,6 @@ plugin manager.
   `soul.md`.
 - `cordis.patch.yml` copies DSH's standard preset. When DSH updates, re-check
   it against `dsh-web-app/presets/standard.patch.yml`.
-- Bundle no 大肥鱼 artwork from the community (see NOTICE.md).
+- The avatar's whale is DeepSeek's mark from DSH's MIT source; keep its notice
+  in NOTICE.md. Bundle no community 大肥鱼 artwork: most of it is
+  non-commercial (CC BY-NC-SA) or of unclear rights.

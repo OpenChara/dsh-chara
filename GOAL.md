@@ -56,16 +56,17 @@
 
 ## 美术素材立场
 
-本仓库**不打包任何大肥鱼 / 鲸鱼娘的美术素材**。查证结果：
+查证结果（2026-10-25 修订）：
 
-- 社区的「大肥鱼」形象是二创，权利不清；`dsh-dafeiyu` 的作者已经把这批帧从 npm 包里撤掉了。
-- `PC2005-cloud/dsh-pet` 的「鲸尾女仆」动画是 MIT 协议，可以用。
-- 「鲸鱼娘·明月」等形象是 CC BY-NC-SA，不能商用。
+- **DeepSeek 官方的鲸鱼标志**：DeepSeek Harness 仓库以 MIT 开源，Copyright (c) 2026 DeepSeek。鲸鱼轮廓 `FISH_LOGO_PATH` 在 `ui-primitives/src/FishLogo.tsx` 里公开导出，已发布的 `@deepseek-ai/dsh-web-frontend` 也带着它。版权上可以用，但它也是商标，MIT 不授权商标，要按 DSH 的《品牌素材使用规范》来：不让人误以为是官方出品或官方背书。
+- **社区二次元「大肥鱼 / 鲸鱼娘」**：xiaoweigen/deepseek-dafeiyu-assets、「鲸鱼娘·明月」等是 CC BY-NC-SA，不能商用；dsh-dafeiyu 早期的 BigFish 帧已归档，注明不在 MIT 范围内。
+- **`PC2005-cloud/dsh-pet` 的「鲸尾女仆」动画**：MIT，dsh-dafeiyu 现在用的就是它。
 
 因此：
 
-- 头像用我们自己画的原创 SVG（一条简单的鲸鱼，不仿 DeepSeek 的商标图形）；
-- 动态形象交给用户另装的 `dsh-dafeiyu`（它自带 MIT 素材），两者通过 `session/event` 天然联动。
+- 头像用官方鲸鱼标志：MIT 路径 + 浅色圆底 + 品牌蓝，NOTICE.md 里附上 MIT 全文和商标说明；
+- 不打包社区的二次元素材；
+- 动态形象交给用户另装的 `dsh-dafeiyu`（MIT 素材），两者通过 `session/event` 天然联动。
 
 本插件是非官方的同人项目，与 DeepSeek 无关联，也未获其背书。
 
