@@ -246,7 +246,7 @@ async function main() {
   check('ask_user_question is not offered (no one is there in free time)', !tools.includes('ask_user_question'), tools)
   check('DSH\'s own tools stay (files, shell, schedule)', ['read', 'write', 'bash'].every(t => tools.includes(t)), tools)
   const context = (firstRequest?.messages ?? []).filter(m => m.role === 'user').map(textOf).join('\n')
-  check('the runtime context carries the aspiration', context.includes('Your aspiration') && context.includes('有意思的小地方'))
+  check('the runtime context carries the rhythm and no aspiration', context.includes('Your rhythm') && !/aspiration/i.test(context + system))
   check('the wake text is the first-wake prompt', context.includes('【醒来'))
 
   console.log('\n[3] the session in DSH')

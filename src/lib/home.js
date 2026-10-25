@@ -13,11 +13,9 @@ export function seedChara(paths, personaDir, avatarFile = 'avatar.png') {
   const created = []
   ensureDir(paths.soulDir)
   ensureDir(paths.stateDir)
-  for (const [name, dest] of [['soul.md', paths.soul], ['aspiration.md', paths.aspiration]]) {
-    if (!existsSync(dest)) {
-      copyFileSync(join(personaDir, name), dest)
-      created.push(dest)
-    }
+  if (!existsSync(paths.soul)) {
+    copyFileSync(join(personaDir, 'soul.md'), paths.soul)
+    created.push(paths.soul)
   }
   created.push(...copyTreeIfMissing(join(personaDir, 'home'), paths.home))
   const avatar = join(paths.site, avatarFile)

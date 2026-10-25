@@ -7,7 +7,7 @@
 Install this plugin and restart DSH, and a pinned 「大肥鱼」 session appears in the sidebar. It is a chara living in DSH, not just an assistant with a different prompt. It has:
 
 - a stable persona, kept in a `soul.md` that you can edit and it cannot;
-- an aspiration that you set, and tasks of its own;
+- tasks of its own: the few lasting things it has chosen to pursue;
 - its own rhythm: after a quiet stretch it wakes up and does its own things;
 - its own home: a personal website, a diary and a long-term memory. You can browse the website inside DSH at any time;
 - a line to you on WeChat, Telegram or QQ: you can reach it there, and it can reach you.
@@ -35,11 +35,10 @@ It runs on DSH's own sessions, tools, schedules and permissions. The plugin only
 - The chara works in its own home, and `soul.md` lives outside it, so DSH's workspace sandbox keeps the chara from rewriting it.
 - Other sessions and modes are untouched.
 
-**Aspiration → tasks → todos.**
-- Aspiration (`aspiration.md`): set by you, read-only to the chara, never "completed".
-- Tasks: the chara's own lasting threads, managed with the `chara_task` tool. Up to 12 active; completing one seals it.
+**Tasks → todos.**
+- Tasks: lasting threads the chara has chosen to pursue, managed with the `chara_task` tool. Up to 12 active; completing one seals it.
 - Todos: DSH's own todo list, for the steps of the job at hand.
-- The aspiration, the tasks and the long-term memory (`MEMORY.md`) ride along with every turn.
+- The tasks and the long-term memory (`MEMORY.md`) ride along with every turn.
 
 **Free time (its own rhythm).**
 - After each turn the plugin schedules the next wake through DSH's own scheduled tasks, 60 minutes later by default. A wake is an ordinary scheduled message, visible under Automation tasks.
@@ -63,7 +62,13 @@ It runs on DSH's own sessions, tools, schedules and permissions. The plugin only
   - **QQ**: through the OneBot forward WebSocket of NapCat or Lagrange.
 - Text only for now: incoming images and files become markers such as "[图片]", and it cannot send files out yet.
 
-**Settings → 大肥鱼.** Here you can switch free time on and off, set the quiet stretch, wake it now, connect messaging apps, edit the persona and the aspiration, and see its tasks and where its home is.
+**Settings → 大肥鱼.** Its avatar and state at the top, then four tabs:
+- Rhythm: free time on or off, and how long it stays quiet before waking;
+- Messaging: connect WeChat, Telegram or QQ, and choose who may talk to it;
+- Persona: edit `soul.md`;
+- Tasks & home: what it is working on, and its home folder.
+
+"Wake it now" sits at the top, always one click away.
 
 **DSH's own capabilities stay.** Files, shell, web, skills, scheduled tasks, `/goal`, sub-agents and compaction are all there. Two things are left out:
 - plan mode, which is a coding workflow;
@@ -99,7 +104,6 @@ Everything is under `$DSH_HOME/chara/dafeiyu/` (by default `~/.dsh/chara/dafeiyu
 
 ```
 soul/soul.md          persona (you edit it; it cannot)
-soul/aspiration.md    aspiration (you edit it; it cannot)
 home/                 its home, and the session's working directory
   site/index.html     personal website
   diary/              diary
@@ -120,7 +124,7 @@ Every 大肥鱼 turn is an ordinary DSH session event. With the [QCYTSN/dsh-dafe
 
 - The website is read-only and limited to `site/`. Pages run in a sandboxed iframe with no same-origin access, under a CSP that forbids network requests and form submissions, and the site's path changes on every start.
 - `/api/chara` uses DSH's own login: without it you get 401, and cross-origin POSTs are always refused.
-- The persona and the aspiration live outside the session's working directory, out of the chara's reach.
+- The persona lives outside the session's working directory, out of the chara's reach.
 - The messaging gateway answers only you by default. A "*" in the allow-list opens it to anyone, and the chara has a shell and files; the settings page says so. Platform tokens stay on this machine in mode-600 files, and the API only returns them masked.
 
 ## Development
@@ -142,7 +146,7 @@ cordis.patch.yml    inserts the host row and the 大肥鱼 preset (based on DSH'
 src/host.js         host: seeds files, keeps the session and the rhythm, serves the API and site
 src/agent.js        in the preset: persona, life rules, context, chara_task / chara_rest
 client.js           web client: the settings page and the home tab
-personas/dafeiyu/   大肥鱼: soul.md, aspiration.md, persona.json, avatar, home seed
+personas/dafeiyu/   大肥鱼: soul.md, persona.json, avatar, home seed
 ```
 
 ## Roadmap

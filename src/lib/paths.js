@@ -1,7 +1,7 @@
 // Where one chara's files live. Three areas with different owners:
-//   soul/   user-owned identity (soul.md, aspiration.md). Outside the chara's
+//   soul/   user-owned identity (soul.md). Outside the chara's
 //           working directory, so its own file tools cannot rewrite it.
-//   state/  plugin-owned bookkeeping (life.json, tasks.json).
+//   state/  plugin-owned bookkeeping (life.json, tasks.json, the gateway's files).
 //   home/   the chara's own world and the session's working directory:
 //           site/ (its website), diary/, MEMORY.md and whatever else it makes.
 import { homedir } from 'node:os'
@@ -20,7 +20,6 @@ export function charaPaths(root, id) {
     base,
     soulDir: join(base, 'soul'),
     soul: join(base, 'soul', 'soul.md'),
-    aspiration: join(base, 'soul', 'aspiration.md'),
     stateDir: join(base, 'state'),
     life: join(base, 'state', 'life.json'),
     tasks: join(base, 'state', 'tasks.json'),

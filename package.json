@@ -1,7 +1,7 @@
 {
   "name": "dsh-chara",
   "version": "0.1.0",
-  "description": "DSH 插件：让角色住进 DSH。大肥鱼有自己的家、理想和作息，会自己醒来做事、维护自己的网站和日记。",
+  "description": "DSH 插件：让角色住进 DSH。大肥鱼有自己的家和作息，会自己醒来做事、维护自己的网站和日记，也能在微信、Telegram、QQ 上找到你。",
   "keywords": [
     "dsh",
     "dsh-plugin",

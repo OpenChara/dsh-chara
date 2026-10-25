@@ -38,8 +38,8 @@ Apache-2.0.
 
 ## 来源 · Provenance
 
-- 人格文本（`personas/dafeiyu/soul.md`、`aspiration.md`）、网站初始内容和插件代码都为本项目原创；头像见上。
-- 设计（理想 → 任务 → todo 三层目标、patience / rest 作息、个人网站模块、
+- 人格文本（`personas/dafeiyu/soul.md`）、网站初始内容和插件代码都为本项目原创；头像见上。
+- 设计（任务 → todo 的目标分层、patience / rest 作息、个人网站模块、
   中立的生活规则）移植自 OpenChara/OpenCharaAgent（Apache-2.0），只改写成
   DSH 插件的形态，没有搬运它的 harness。
 - 消息网关（`src/gateway/`：微信 iLink、Telegram、QQ OneBot 适配器，访问控制、
@@ -51,7 +51,7 @@ Apache-2.0.
 
 - The persona text, the website seed and the plugin code are original to this
   project; for the avatar, see above.
-- The design (the aspiration → task → todo goal model, the patience/rest rhythm,
+- The design (the task → todo split, the patience/rest rhythm,
   the personal-website module, the neutral life rules) is ported from
   OpenChara/OpenCharaAgent (Apache-2.0), reshaped as a DSH plugin, without
   porting its harness.

@@ -1,4 +1,4 @@
-// The chara's tasks: its own lasting threads, advanced toward the aspiration.
+// The chara's tasks: the lasting threads it has chosen to pursue.
 // Ported from OpenCharaAgent (src/chara/tools/task.py) with the same rules:
 // a few short active tasks the chara edits freely; completing a task seals it
 // into an immutable record that never re-enters the prompt.
@@ -68,22 +68,15 @@ export class TaskStore {
     return item
   }
 
-  /**
-   * The per-turn block: active tasks only. With none active, a gentle
-   * invitation when there is an aspiration to work toward, else nothing.
-   */
-  renderBlock({ hasAspiration = false } = {}) {
+  /** The per-turn block: active tasks, or a light note when there are none. */
+  renderBlock() {
     const active = this.active()
     if (active.length > 0) {
-      return 'Your tasks: the threads you are advancing toward your aspiration (manage them with the `chara_task` tool):\n'
+      return 'Your tasks: the threads you are pursuing (manage them with the `chara_task` tool):\n'
         + active.map(t => `  [${t.id}] ${t.content}`).join('\n')
     }
-    if (hasAspiration) {
-      return 'You have no task right now. If something you could move toward your aspiration comes to mind, '
-        + 'set it with the `chara_task` tool to keep a thread going, or have none if this stretch of life is '
-        + 'better lived at the pace of the moment.'
-    }
-    return ''
+    return 'You have no task right now. When something you want to pursue comes to mind, you can keep it '
+      + 'as a task with the `chara_task` tool; having none for a while is fine too.'
   }
 }
 

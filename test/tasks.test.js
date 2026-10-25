@@ -63,12 +63,11 @@ test('unknown ids are reported', () => {
   assert.throws(() => store().complete('t9'), /no task with id "t9"/)
 })
 
-test('renderBlock: active tasks, an invitation, or nothing', () => {
+test('renderBlock: active tasks, or a light note when there are none', () => {
   const tasks = store()
-  assert.equal(tasks.renderBlock(), '')
-  assert.match(tasks.renderBlock({ hasAspiration: true }), /You have no task right now/)
+  assert.match(tasks.renderBlock(), /You have no task right now/)
   tasks.add('tend the garden')
-  const block = tasks.renderBlock({ hasAspiration: true })
+  const block = tasks.renderBlock()
   assert.match(block, /\[t1\] tend the garden/)
   assert.match(block, /chara_task/)
 })

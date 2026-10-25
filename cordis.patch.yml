@@ -23,7 +23,7 @@
       config:
         id: dafeiyu
         name: 大肥鱼
-        description: 住在 DSH 里的鲸鱼娘：有自己的家、理想和作息，会自己醒来做事。
+        description: 住在 DSH 里的鲸鱼娘：有自己的家和作息，会自己醒来做事。
         order: 5
         plugins:
           - id: chara-agent

@@ -52,15 +52,11 @@ export function apply(ctx, config = {}) {
     order: NOW_CONTEXT_ORDER,
     required: true,
     interpolate: false,
-    text: () => {
-      const aspiration = readText(paths.aspiration, '')
-      return nowContext({
-        aspiration,
-        tasksBlock: tasks.renderBlock({ hasAspiration: aspiration.trim() !== '' }),
-        memory: readText(paths.memory, ''),
-        life: life.state(),
-      })
-    },
+    text: () => nowContext({
+      tasksBlock: tasks.renderBlock(),
+      memory: readText(paths.memory, ''),
+      life: life.state(),
+    }),
   })
 
   ctx.tools.register(taskTool(tasks))
@@ -77,7 +73,7 @@ export function taskTool(tasks) {
   return {
     name: 'chara_task',
     description: [
-      'Manage your tasks: the few lasting threads you are advancing toward your aspiration.',
+      'Manage your tasks: the few lasting threads you have chosen to pursue.',
       'Actions: "add" (content), "update" (id, content), "complete" (id, optional note; this seals the task as a finished record),',
       '"remove" (id; drop an active task you no longer want), "list" (active and recently finished tasks).',
       'Keep each task one short line; keep the list short and real.',

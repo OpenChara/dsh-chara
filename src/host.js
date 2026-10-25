@@ -208,11 +208,11 @@ export function apply(ctx, config = {}) {
       await life.wakeNow()
       return sendJson(res, 200, stateView())
     }
-    if (route === '/soul' || route === '/aspiration') {
+    if (route === '/soul') {
       const text = String(body.text ?? '')
       if (text.length > MAX_SOUL) return sendJson(res, 413, { ok: false, error: 'too long' })
-      if (route === '/soul' && text.trim() === '') return sendJson(res, 400, { ok: false, error: 'the persona cannot be empty' })
-      atomicWrite(route === '/soul' ? paths.soul : paths.aspiration, text.endsWith('\n') ? text : `${text}\n`)
+      if (text.trim() === '') return sendJson(res, 400, { ok: false, error: 'the persona cannot be empty' })
+      atomicWrite(paths.soul, text.endsWith('\n') ? text : `${text}\n`)
       return sendJson(res, 200, stateView())
     }
     return sendJson(res, 404, { ok: false, error: 'not found' })
@@ -257,7 +257,6 @@ export function apply(ctx, config = {}) {
       siteUrl: `${siteBase}/index.html`,
       tasks: { active: tasks.active(), done: tasks.done().slice(-20) },
       soul: readText(paths.soul, ''),
-      aspiration: readText(paths.aspiration, ''),
       home: paths.home,
     }
   }

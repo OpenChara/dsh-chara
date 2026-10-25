@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- 删掉「理想」：DSH 版里只有它自己选择的任务。`aspiration.md` 不再生成，也不再读；
+  已有的文件会被保留但不再使用。The aspiration is gone from the DSH version.
+- 界面重做，跟 DSH 自己的控件一致：设置页顶部是头像和状态，下面分作息、消息、
+  人格、任务与家四页；开关、按钮、状态点、分隔线都用 DSH 的设计令牌，深浅色都对。
+  小窝顶栏同步更新；大肥鱼的初始网站换了新样式。The UI follows DSH's own look.
 - 消息网关（移植自 OpenCharaAgent）：在微信（ClawBot / iLink，设置里扫码登录）、
   Telegram、QQ（NapCat / Lagrange 的 OneBot）上都能找到大肥鱼。所有应用共用它
   的那一个会话，回复发回原处；新工具 `chara_speak` 让它主动找你；默认只认你本人，
