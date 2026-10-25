@@ -111,6 +111,7 @@ Every 大肥鱼 turn is an ordinary DSH session event. With the [QCYTSN/dsh-dafe
 ```bash
 npm test                                   # unit tests, no dependencies
 npm run e2e -- --dsh "$(command -v dsh)"   # end to end
+npm run e2e -- --dsh "$(command -v dsh)" --plugin "github:OpenChara/dsh-chara#main"   # install it the way users do
 ```
 
 What the end-to-end test does:
@@ -131,8 +132,9 @@ personas/dafeiyu/   大肥鱼: soul.md, aspiration.md, persona.json, avatar, hom
 
 - **Cross-session memory** (like Codex's memory): evaluate the community memory plugins first, then decide whether to integrate one or build our own. For now its long-term memory is `MEMORY.md`.
 - **Custom personas and their management**: personas are already data (`personas/<id>/`). Next come several charas, AI-assisted persona writing, and SillyTavern card import.
-- **Gateways, and reaching out to you**: prefer the community plugins for QQ, WeChat, Telegram and the like. Then add a channel for speaking up, so that in free time it can reach you when it finds something worth telling you.
-- **Browser**: integrate a community browser plugin or MCP server.
+- **Gateways, and reaching out to you**: prefer the community plugins for QQ, WeChat, Telegram and the like (candidates, not yet verified: 534119219/dsh-messaging, AbcdefgXW/dsh-msg-hub, cheems135/dsh-qq-bridge). Then add a tool for speaking up, so that in free time it can reach you when it finds something worth telling you (candidate: the `pushNotifier` service from 534119219/chicheng-push).
+- **Browser**: integrate a community browser plugin or MCP server (candidates: alllllinnrann/dsh-inapp-browser, angelky7/dsh-browser-control).
+- **Memory candidates**: kenz1117/dsh-engram, STARDUSTLC666/dsh-dream.
 - **Show the home tab only in the chara's session**: DSH's `conversation.view` is global today, so other sessions also show this tab (it always shows 大肥鱼's home).
 - **Desktop app** verification and fixes; phones are a low priority.
 

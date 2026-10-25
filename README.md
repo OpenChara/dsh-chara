@@ -111,6 +111,7 @@ state/tasks.json      它的任务
 ```bash
 npm test                                   # 单元测试，无依赖
 npm run e2e -- --dsh "$(command -v dsh)"   # 端到端
+npm run e2e -- --dsh "$(command -v dsh)" --plugin "github:OpenChara/dsh-chara#main"   # 按用户的安装方式测
 ```
 
 端到端测试的流程：
@@ -131,8 +132,9 @@ personas/dafeiyu/   大肥鱼：soul.md、aspiration.md、persona.json、头像�
 
 - **跨会话记忆**（类似 Codex 的 memory）：先评估社区的记忆插件，再决定是接入还是自建。现在它的长期记忆是 `MEMORY.md`。
 - **自定义人格与管理**：人格已经是数据驱动的（`personas/<id>/`），接下来做多人格、AI 辅助写人格、导入 SillyTavern 角色卡。
-- **网关与主动找你**：QQ、微信、Telegram 等优先接入社区插件；再加一个「主动说话」的通道，让它在自由时间里遇到值得告诉你的事时能联系你。
-- **浏览器**：接入社区的浏览器插件或 MCP。
+- **网关与主动找你**：QQ、微信、Telegram 等优先接入社区插件（候选，未验证：534119219/dsh-messaging、AbcdefgXW/dsh-msg-hub、cheems135/dsh-qq-bridge）；再加一个「主动说话」的工具，让它在自由时间里遇到值得告诉你的事时能联系你（候选：534119219/chicheng-push 提供的 `pushNotifier` 服务）。
+- **浏览器**：接入社区的浏览器插件或 MCP（候选：alllllinnrann/dsh-inapp-browser、angelky7/dsh-browser-control）。
+- **跨会话记忆的候选**：kenz1117/dsh-engram、STARDUSTLC666/dsh-dream。
 - **小窝标签页只在大肥鱼会话里显示**：DSH 的 `conversation.view` 目前是全局的，所以别的会话里也能看到这个标签页（显示的都是大肥鱼的家）。
 - **桌面版**的验证与适配；手机端优先级低。
 

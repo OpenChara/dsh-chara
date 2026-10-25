@@ -1,6 +1,10 @@
 // End-to-end check of dsh-chara against a real DSH, with a scripted model.
 //
-//   node scripts/e2e/run.mjs [--dsh <path to the dsh binary>] [--keep]
+//   node scripts/e2e/run.mjs [--dsh <path to the dsh binary>] [--plugin <spec>] [--keep]
+//
+// --plugin installs from another spec than this checkout (default
+// link:<this repo>), e.g. "github:OpenChara/dsh-chara#main" to check what users
+// get. The mock model and its overlay always come from this checkout.
 //
 // What it does, from nothing:
 //   1. a fresh DSH_HOME in a temp dir, and the scripted mock model (mock-llm.mjs);
@@ -34,6 +38,7 @@ const option = (name) => {
 }
 const DSH = option('--dsh') ?? process.env.DSH_BIN ?? 'dsh'
 const KEEP = flag('--keep')
+const PLUGIN = option('--plugin') ?? `link:${REPO}`
 
 const work = mkdtempSync(join(tmpdir(), 'dsh-chara-e2e-'))
 const env = {
@@ -183,8 +188,8 @@ async function main() {
   const mock = start(process.execPath, [join(HERE, 'mock-llm.mjs'), '0', llmLog], { ready: /mock llm on (\d+)/, logName: 'mock' })
   env.MOCK_LLM_PORT = (await mock.ready)[1]
 
-  console.log('installing the plugin into a fresh web profile…')
-  const add = spawnSync(DSH, ['plugin', '--profile', 'web', 'add', `link:${REPO}`], { cwd: work, env, encoding: 'utf8', timeout: 600_000 })
+  console.log(`installing ${PLUGIN} into a fresh web profile…`)
+  const add = spawnSync(DSH, ['plugin', '--profile', 'web', 'add', PLUGIN], { cwd: work, env, encoding: 'utf8', timeout: 600_000 })
   if (add.status !== 0) throw new Error(`dsh plugin add failed:\n${add.stdout}\n${add.stderr}`)
 
   console.log('\n[0] the plugin is part of the profile')

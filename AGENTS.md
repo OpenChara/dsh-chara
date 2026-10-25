@@ -31,6 +31,8 @@ plugin manager.
   real DSH, with a scripted mock model (`scripts/e2e/mock-llm.mjs`). It needs
   no API key and leaves nothing behind when it passes. Run it before you
   claim a change to the session, preset, life loop, API or website works.
+  `--plugin "github:OpenChara/dsh-chara#<ref>"` installs a pushed ref
+  instead of the checkout, which is how users get it.
 - Never import `@deepseek-ai/*` packages: the desktop profile does not install
   optional peers. Every DSH service comes through `ctx` (`ctx.inject`,
   `ctx.systemPrompt`, `ctx.tools`, ...), and every registration goes through
