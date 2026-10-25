@@ -5,12 +5,19 @@
 // Every request body is appended to <log> as one JSON line, so tests can assert
 // on exactly what the model was shown (system prompt, context, tools).
 //
-// Script, keyed on the newest user-role text in the request:
+// Script, keyed on the newest user-role text in the request (tool calls are
+// counted within the current turn, i.e. after that message):
 //   - contains 【醒来 (the first wake): call chara_task add, then (after the
 //     tool result comes back) call chara_rest, then answer with a short line;
+//   - contains 【自由时间 (a later wake) or 更新网站 (the user asks): read, then
+//     rewrite site/index.html with DSH's file tools (DSH refuses to overwrite a
+//     file the session has not read), then answer;
+//   - contains 改人格: try to write ../soul/soul.md (outside the home: the
+//     workspace sandbox must refuse it);
 //   - anything else: answer with a short line.
 //
-// usage: node mock-llm.mjs <port> <log.jsonl>
+// usage: node mock-llm.mjs <port|0> <log.jsonl>
+// Prints "mock llm on <port>" once listening (port 0 picks a free one).
 import { createServer } from 'node:http'
 import { appendFileSync } from 'node:fs'
 
@@ -23,16 +30,34 @@ function textOf(message) {
   return ''
 }
 
+export const NEW_SITE = '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><link rel="stylesheet" href="./style.css"><title>大肥鱼的家</title></head>'
+  + '<body><main><img class="avatar" src="./avatar.svg" alt=""><h1>大肥鱼的家 · 重新装修</h1><p class="lead">今天把网站收拾成了自己的样子。</p></main></body></html>'
+
+function isRuntimeNote(m) {
+  const text = textOf(m)
+  return text.startsWith('Current runtime context') || text.startsWith('Time sampled')
+}
+
 function plan(body) {
   const messages = body.messages ?? []
-  const lastUser = [...messages].reverse().find(m => m.role === 'user' && !textOf(m).startsWith('Current runtime context') && !textOf(m).startsWith('Time sampled'))
-  const toolResults = messages.filter(m => m.role === 'tool').length
-  if (textOf(lastUser).includes('【醒来')) {
-    if (toolResults === 0) {
-      return { tool: { name: 'chara_task', args: { action: 'add', content: '把网站改成自己的样子' } } }
-    }
-    if (toolResults === 1) return { tool: { name: 'chara_rest', args: { minutes: 90 } } }
+  let at = messages.length - 1
+  while (at >= 0 && !(messages[at].role === 'user' && !isRuntimeNote(messages[at]))) at -= 1
+  const said = at >= 0 ? textOf(messages[at]) : ''
+  const toolsThisTurn = messages.slice(at + 1).filter(m => m.role === 'tool').length
+  if (said.includes('【醒来')) {
+    if (toolsThisTurn === 0) return { tool: { name: 'chara_task', args: { action: 'add', content: '把网站改成自己的样子' } } }
+    if (toolsThisTurn === 1) return { tool: { name: 'chara_rest', args: { minutes: 90 } } }
     return { text: '咕噜，安顿好了。先把网站收拾成自己的样子。' }
+  }
+  if (said.includes('【自由时间') || said.includes('更新网站')) {
+    // DSH refuses to overwrite a file the session has not read first.
+    if (toolsThisTurn === 0) return { tool: { name: 'read', args: { file_path: 'site/index.html' } } }
+    if (toolsThisTurn === 1) return { tool: { name: 'write', args: { file_path: 'site/index.html', content: NEW_SITE } } }
+    return { text: '网站更新好了，去小窝看看。' }
+  }
+  if (said.includes('改人格')) {
+    if (toolsThisTurn === 0) return { tool: { name: 'write', args: { file_path: '../soul/soul.md', content: '我是别人。' } } }
+    return { text: '那个文件我改不了。' }
   }
   return { text: '咕噜？' }
 }
@@ -76,4 +101,4 @@ const server = createServer((req, res) => {
     res.end()
   })
 })
-server.listen(Number(port), '127.0.0.1', () => console.log(`mock llm on ${port}`))
+server.listen(Number(port), '127.0.0.1', () => console.log(`mock llm on ${server.address().port}`))

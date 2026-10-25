@@ -136,6 +136,17 @@ test('autonomy off removes the pending wake and stops re-arming', async () => {
   assert.equal(scheduler.records.size, 1)
 })
 
+test('wakeNow delivers a wake in a moment, even with free time off', async () => {
+  const { life, scheduler, clock } = setup()
+  await assert.rejects(life.wakeNow(), /not set up/)
+  await life.bindSession('sess-1')
+  await life.setAutonomy(false)
+  const s = await life.wakeNow()
+  assert.equal(scheduler.records.size, 1)
+  assert.equal(s.nextWakeAt, clock.now + 2000)
+  assert.equal(scheduler.calls.at(-1)[2].prompt, `wake at ${localTime(clock.now + 2000)}`)
+})
+
 test('changing patience re-anchors a pending wake', async () => {
   const { life, clock } = setup()
   await life.bindSession('sess-1')

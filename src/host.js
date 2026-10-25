@@ -174,6 +174,10 @@ export function apply(ctx, config = {}) {
       }
       return sendJson(res, 200, stateView())
     }
+    if (route === '/wake') {
+      await life.wakeNow()
+      return sendJson(res, 200, stateView())
+    }
     if (route === '/soul' || route === '/aspiration') {
       const text = String(body.text ?? '')
       if (text.length > MAX_SOUL) return sendJson(res, 413, { ok: false, error: 'too long' })

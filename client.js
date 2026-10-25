@@ -91,6 +91,28 @@ window.__ModuleLoader__.load({
       return h('img', { src: `${API}/avatar.svg`, alt: '', width: size, height: size, 'data-chara-avatar': '' })
     }
 
+    function WakeButton() {
+      const [busy, setBusy] = useState(false)
+      const [status, setStatus] = useState({ text: '', kind: '' })
+      useEffect(() => {
+        if (status.kind !== 'ok') return undefined
+        const timer = setTimeout(() => setStatus({ text: '', kind: '' }), 6000)
+        return () => clearTimeout(timer)
+      }, [status])
+      const wake = () => {
+        setBusy(true)
+        setStatus({ text: '', kind: '' })
+        jpost('/wake', {})
+          .then((s) => { publish(s); setStatus({ text: T('已叫醒，几秒后开始。', 'Waking it up in a few seconds.'), kind: 'ok' }) })
+          .catch((e) => setStatus({ text: String(e.message || e), kind: 'error' }))
+          .finally(() => setBusy(false))
+      }
+      return h(React.Fragment, null,
+        h('button', { 'data-chara-btn': '', disabled: busy, onClick: wake },
+          busy ? h(Spinner) : null, T('现在叫醒它', 'Wake it now')),
+        status.text ? h('span', { 'data-chara-notice': status.kind, 'data-chara-inline': '' }, status.text) : null)
+    }
+
     // ---- settings section ----
 
     function FreeTime({ state }) {
@@ -139,6 +161,7 @@ window.__ModuleLoader__.load({
         h('p', { 'data-chara-hint': '' },
           T('下次醒来：', 'Next wake: '), on ? clock(state.life.nextWakeAt) : T('（已关）', '(off)'),
           T(' · 已醒来 ', ' · woke '), String(state.life.wakes), T(' 次', ' time(s)')),
+        h('div', { 'data-chara-row': '' }, h(WakeButton)),
         h(Notice, { text: error }))
     }
 
@@ -244,6 +267,7 @@ window.__ModuleLoader__.load({
               ? T(`自由时间开 · 下次醒来 ${clock(life.nextWakeAt)}`, `Free time on · next wake ${clock(life.nextWakeAt)}`)
               : T('自由时间关', 'Free time off')),
           h('span', { 'data-chara-spacer': '' }),
+          h(WakeButton),
           h('button', { 'data-chara-btn': '', disabled: refreshing, onClick: refresh },
             refreshing ? h(Spinner) : null, T('刷新', 'Refresh')),
           h('a', { 'data-chara-btn': '', href: state.siteUrl, target: '_blank', rel: 'noopener noreferrer' },
@@ -282,6 +306,7 @@ window.__ModuleLoader__.load({
 [data-chara-notice="warn"]{color:var(--dsw-alias-state-warn-label);border:1px solid var(--dsw-alias-state-warn-primary)}
 [data-chara-notice="ok"]{color:var(--dsw-alias-state-success-primary)}
 [data-chara-notice="info"]{color:var(--dsw-alias-label-secondary)}
+[data-chara-inline]{margin:0;padding:0 4px}
 [data-chara-tasks]{margin:0;padding-left:18px;font-size:13px;line-height:1.8}
 [data-chara-tasks="done"]{color:var(--dsw-alias-label-tertiary)}
 [data-chara-path]{font-size:12px;word-break:break-all;color:var(--dsw-alias-label-secondary)}

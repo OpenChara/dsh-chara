@@ -158,6 +158,19 @@ export class LifeLoop {
     })
   }
 
+  /**
+   * The user asked for a wake now: deliver one in a moment through the same
+   * schedule path. Works with free time off too (it is an explicit request);
+   * afterwards the usual rhythm, or none, resumes.
+   */
+  wakeNow() {
+    return this.serial(async () => {
+      const s = this.state()
+      if (!s.sessionId) throw new Error('the session is not set up yet')
+      return this.arm(2)
+    })
+  }
+
   /** The chara chose when to wake next; applies when the current turn ends. */
   requestRest(seconds) {
     return this.serial(async () => this.save({ pendingRestSeconds: clamp(seconds, MIN_REST, MAX_REST) }))
