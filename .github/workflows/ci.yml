@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Syntax
+        run: |
+          for f in client.js src/*.js src/lib/*.js scripts/e2e/*.mjs test/*.js; do
+            node --check "$f"
+          done
+      - name: Manifests
+        run: |
+          node -e "
+            const pkg = require('./package.json')
+            for (const f of pkg.files) require('fs').statSync(f)
+            for (const t of Object.values(pkg.exports)) require('fs').statSync(t)
+            const persona = require('./personas/dafeiyu/persona.json')
+            if (!persona.wakePrompt.includes('{{time}}')) throw new Error('wakePrompt lacks {{time}}')
+            for (const l of ['zh-CN', 'en-US']) require('./locale/' + l + '.json')
+          "
+      - name: Unit tests
+        run: npm test
