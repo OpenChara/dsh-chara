@@ -20,7 +20,7 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Syntax
         run: |
-          for f in client.js src/*.js src/lib/*.js scripts/e2e/*.mjs test/*.js; do
+          for f in client.js src/*.js src/lib/*.js src/gateway/*.js src/gateway/adapters/*.js src/vendor/*.mjs scripts/e2e/*.mjs test/*.js; do
             node --check "$f"
           done
       - name: Manifests

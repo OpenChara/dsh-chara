@@ -5,7 +5,8 @@
  *   window.__ModuleLoader__.load({ id: '<package name>', factory: (require) => ({ inject, apply }) })
  *
  * It fills two slots:
- *   - settings.section  "大肥鱼": free time on/off, rhythm, the persona and
+ *   - settings.section  "大肥鱼": free time on/off, rhythm, messaging apps
+ *                       (WeChat QR login, Telegram, QQ), the persona and
  *                       aspiration (user-owned), tasks, where the home lives;
  *   - conversation.view "大肥鱼的小窝": the chara's website, sandboxed, plus
  *                       its status and tasks. Slots are global in DSH, so the
@@ -208,6 +209,163 @@ window.__ModuleLoader__.load({
           : null)
     }
 
+    // ---- messaging apps ----
+
+    const STATE_TEXT = {
+      running: () => T('运行中', 'running'),
+      needs_login: () => T('需要扫码登录', 'needs a QR login'),
+      off: () => T('未开启', 'off'),
+      error: () => T('出错', 'error'),
+    }
+
+    function StatusChip({ entry }) {
+      if (!entry) return null
+      const text = STATE_TEXT[entry.state] ? STATE_TEXT[entry.state]() : entry.state
+      return h('span', { 'data-chara-chip': entry.state }, text, entry.state === 'error' && entry.detail ? `：${entry.detail}` : '')
+    }
+
+    function Field({ label, hint, value, onChange, type, placeholder }) {
+      return h('label', { 'data-chara-field': '' },
+        h('span', null, label),
+        h('input', {
+          type: type || 'text', value, placeholder, autoComplete: 'off', spellCheck: false,
+          onChange: (e) => onChange(e.target.value), 'data-chara-input': '',
+        }),
+        hint ? h('small', { 'data-chara-hint': '' }, hint) : null)
+    }
+
+    function WeixinLogin({ entry, onChanged }) {
+      const [qr, setQr] = useState(null) // { qrcode, svg }
+      const [phase, setPhase] = useState('') // '', 'loading', 'wait', 'scaned', 'expired'
+      const [error, setError] = useState('')
+      const [busy, setBusy] = useState(false)
+      useEffect(() => {
+        if (!qr) return undefined
+        let stopped = false
+        const started = Date.now()
+        const poll = async () => {
+          while (!stopped && Date.now() - started < 5 * 60_000) {
+            try {
+              const result = await jpost('/gateway/weixin/status', { qrcode: qr.qrcode })
+              if (stopped) return
+              if (result.login === 'confirmed') {
+                setQr(null)
+                setPhase('')
+                onChanged(result)
+                return
+              }
+              if (result.login === 'expired') {
+                setQr(null)
+                setPhase('expired')
+                return
+              }
+              setPhase(result.login)
+            } catch (e) {
+              if (!stopped) { setError(String(e.message || e)); setQr(null); setPhase('') }
+              return
+            }
+            await new Promise(resolve => setTimeout(resolve, 2000))
+          }
+          if (!stopped) { setQr(null); setPhase('expired') }
+        }
+        poll()
+        return () => { stopped = true }
+      }, [qr])
+      const start = () => {
+        setPhase('loading')
+        setError('')
+        jpost('/gateway/weixin/qr', {})
+          .then((r) => { setQr({ qrcode: r.qrcode, svg: r.svg }); setPhase('wait') })
+          .catch((e) => { setPhase(''); setError(String(e.message || e)) })
+      }
+      const logout = () => {
+        setBusy(true)
+        setError('')
+        jpost('/gateway/weixin/logout', {})
+          .then(onChanged)
+          .catch((e) => setError(String(e.message || e)))
+          .finally(() => setBusy(false))
+      }
+      const running = entry && entry.state === 'running'
+      return h('div', null,
+        h('div', { 'data-chara-row': '' },
+          h('strong', null, T('微信', 'WeChat')), h(StatusChip, { entry }),
+          h('span', { 'data-chara-spacer': '' }),
+          running
+            ? h('button', { 'data-chara-btn': '', disabled: busy, onClick: logout }, busy ? h(Spinner) : null, T('退出登录', 'Log out'))
+            : h('button', { 'data-chara-btn': 'primary', disabled: phase === 'loading' || Boolean(qr), onClick: start },
+              phase === 'loading' ? h(Spinner) : null, T('扫码登录', 'Log in with QR'))),
+        h('p', { 'data-chara-hint': '' }, T(
+          '用微信的 ClawBot（iLink）登录。登录后用这个微信给它发消息，它在同一个会话里回你。',
+          'Logs in through WeChat ClawBot (iLink). Then message it from that WeChat; it answers in the same session.')),
+        qr
+          ? h('div', { 'data-chara-qr': '' },
+            h('img', { src: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(qr.svg)}`, alt: T('微信登录二维码', 'WeChat login QR code') }),
+            h('p', null, phase === 'scaned' ? T('已扫码，请在手机上确认…', 'Scanned; confirm on your phone…') : T('用手机微信扫一扫', 'Scan with WeChat on your phone'), ' ', h(Spinner)))
+          : null,
+        phase === 'expired' ? h(Notice, { kind: 'warn', text: T('二维码过期了，再点一次「扫码登录」。', 'The QR code expired; press "Log in with QR" again.') }) : null,
+        h(Notice, { text: error }))
+    }
+
+    function GatewayPanel() {
+      const [view, setView] = useState(null) // { config, status }
+      const [draft, setDraft] = useState(null)
+      const [busy, setBusy] = useState(false)
+      const [status, setStatus] = useState({ text: '', kind: '' })
+      const load = useCallback(() => jget('/gateway')
+        .then((v) => { setView(v); setDraft(v.config) })
+        .catch((e) => setStatus({ text: String(e.message || e), kind: 'error' })), [])
+      useEffect(() => { load() }, [load])
+      if (!view || !draft) {
+        return h('section', { 'data-chara-card': '' },
+          h('h3', null, T('消息网关', 'Messaging apps')),
+          status.text ? h(Notice, status) : h('p', null, h(Spinner), ' ', T('正在读取…', 'Loading…')))
+      }
+      const entry = (platform) => view.status.platforms.find(p => p.platform === platform)
+      const set = (platform, key) => (value) => setDraft({ ...draft, [platform]: { ...draft[platform], [key]: value } })
+      const toggle = (platform) => () => set(platform, 'enabled')(!draft[platform].enabled)
+      const dirty = JSON.stringify(draft) !== JSON.stringify(view.config)
+      const save = () => {
+        setBusy(true)
+        setStatus({ text: '', kind: '' })
+        jpost('/gateway', draft)
+          .then((v) => { setView(v); setDraft(v.config); setStatus({ text: T('已保存并生效。', 'Saved and applied.'), kind: 'ok' }) })
+          .catch((e) => setStatus({ text: String(e.message || e), kind: 'error' }))
+          .finally(() => setBusy(false))
+      }
+      const applied = (v) => { setView(v); setDraft(v.config) }
+      return h('section', { 'data-chara-card': '' },
+        h('h3', null, T('消息网关', 'Messaging apps')),
+        h('p', { 'data-chara-hint': '' }, T(
+          '让它在微信、Telegram、QQ 上也找得到你。消息进的是它的同一个会话，回复发回原处；它自由时间里想找你时会用 chara_speak 发过去。默认只有你本人能和它聊。',
+          'Reach it from WeChat, Telegram or QQ. Messages go into its one session and replies go back where they came from; in its free time it can reach you with chara_speak. By default only you can talk to it.')),
+        h('div', { 'data-chara-platform': '' }, h(WeixinLogin, { entry: entry('weixin'), onChanged: applied })),
+        h('div', { 'data-chara-platform': '' },
+          h('label', { 'data-chara-row': '' },
+            h('input', { type: 'checkbox', checked: draft.telegram.enabled, onChange: toggle('telegram') }),
+            h('strong', null, 'Telegram'), h(StatusChip, { entry: entry('telegram') })),
+          h(Field, { label: 'Bot token', type: 'password', value: draft.telegram.botToken, onChange: set('telegram', 'botToken'), placeholder: '123456:ABC…', hint: T('在 Telegram 里找 @BotFather 新建一个机器人。', 'Create a bot with @BotFather in Telegram.') }),
+          h(Field, { label: T('你的用户 ID', 'Your user id'), value: draft.telegram.ownerId, onChange: set('telegram', 'ownerId'), placeholder: '123456789', hint: T('数字 ID，可以问 @userinfobot。只有这个账号能和它聊（除非下面另外允许）。', 'Numeric; ask @userinfobot. Only this account can talk to it unless allowed below.') })),
+        h('div', { 'data-chara-platform': '' },
+          h('label', { 'data-chara-row': '' },
+            h('input', { type: 'checkbox', checked: draft.qq.enabled, onChange: toggle('qq') }),
+            h('strong', null, 'QQ'), h(StatusChip, { entry: entry('qq') })),
+          h(Field, { label: T('OneBot WebSocket 地址', 'OneBot WebSocket URL'), value: draft.qq.url, onChange: set('qq', 'url'), placeholder: 'ws://127.0.0.1:3001', hint: T('NapCat / Lagrange 的正向 WebSocket；QQ 登录在它们自己的界面里完成。', 'The forward WebSocket of NapCat or Lagrange; log in to QQ in their own UI.') }),
+          h(Field, { label: 'Access token', type: 'password', value: draft.qq.accessToken, onChange: set('qq', 'accessToken') }),
+          h(Field, { label: T('你的 QQ 号', 'Your QQ number'), value: draft.qq.peerId, onChange: set('qq', 'peerId') })),
+        h(Field, {
+          label: T('另外允许谁和它聊', 'Also allowed'),
+          value: draft.allowedSenders.join(', '),
+          onChange: (value) => setDraft({ ...draft, allowedSenders: value.split(/[\s,，]+/).filter(Boolean) }),
+          placeholder: T('对方的 ID，用逗号分隔', 'their ids, comma separated'),
+          hint: T('「*」表示所有人都能和它聊。它有终端和文件权限，慎用。', '"*" lets anyone talk to it. It has a shell and files; think twice.'),
+        }),
+        h('div', { 'data-chara-row': '' },
+          h('button', { 'data-chara-btn': 'primary', disabled: busy || !dirty, onClick: save }, busy ? h(Spinner) : null, T('保存', 'Save')),
+          dirty ? h('button', { 'data-chara-btn': '', disabled: busy, onClick: () => setDraft(view.config) }, T('还原', 'Revert')) : null),
+        h(Notice, { text: status.text, kind: status.kind }))
+    }
+
     function SettingsPanel() {
       const { state, error, loading, reload } = useChara()
       if (!state) {
@@ -224,6 +382,7 @@ window.__ModuleLoader__.load({
           ? null
           : h(Notice, { kind: 'warn', text: T('它的会话还没建好（DSH 刚启动时可能要等几秒）。', 'Its session is not set up yet (this can take a few seconds after DSH starts).') }),
         h(FreeTime, { state }),
+        h(GatewayPanel),
         h(TextFile, {
           title: T('人格（soul.md）', 'Persona (soul.md)'),
           hint: T('它是谁、怎么说话、守住什么。这个文件只有你能改，它自己改不了。', 'Who it is, how it talks, what it holds to. Only you can edit this file; it cannot.'),
@@ -317,6 +476,16 @@ window.__ModuleLoader__.load({
 [data-chara-spacer]{flex:1}
 [data-chara-strip]{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:6px 12px;font-size:12px;color:var(--dsw-alias-label-secondary);border-bottom:1px solid var(--dsw-alias-border-l2)}
 [data-chara-chip]{padding:1px 8px;border-radius:10px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary)}
+[data-chara-chip="running"]{color:var(--dsw-alias-state-success-primary)}
+[data-chara-chip="error"]{color:var(--dsw-alias-state-error-primary)}
+[data-chara-chip="needs_login"]{color:var(--dsw-alias-state-warn-label)}
+[data-chara-platform]{border-top:1px solid var(--dsw-alias-border-l2);padding:10px 0 4px;margin-top:6px}
+[data-chara-field]{display:flex;flex-direction:column;gap:3px;margin:8px 0;font-size:13px}
+[data-chara-field] small{margin:0}
+[data-chara-input]{padding:5px 8px;border-radius:6px;border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);font-size:13px;max-width:420px}
+[data-chara-qr]{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin:8px 0}
+[data-chara-qr] img{width:200px;height:200px;background:#fff;border-radius:8px;padding:6px}
+[data-chara-qr] p{margin:0;font-size:12px;color:var(--dsw-alias-label-secondary)}
 [data-chara-frame]{flex:1;width:100%;border:0;background:#fff}
 [data-chara-spin]{width:10px;height:10px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;display:inline-block;animation:chara-spin .8s linear infinite}
 @keyframes chara-spin{to{transform:rotate(360deg)}}

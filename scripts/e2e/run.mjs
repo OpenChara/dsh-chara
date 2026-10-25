@@ -15,18 +15,23 @@
 //      task the chara recorded, the API's fence and the website's sandbox;
 //   4. edits the soul, asks for a wake, and checks the next turn carries the
 //      edit and that the chara rebuilt its website in that free time;
-//   5. restarts DSH and checks the chara keeps its session and pending wake.
+//   5. talks to it through stand-ins for Telegram and WeChat iLink
+//      (fake-im.mjs): replies, refusals, the QR login, chara_speak;
+//   6. restarts DSH and checks the chara keeps its session and pending wake,
+//      and that no message is replayed.
 //
 // It needs DSH (>= 0.2.1-rc.2) installed: pass --dsh, set DSH_BIN, or have
 // `dsh` on PATH. Nothing here talks to a real model or needs an API key.
 import { spawn, spawnSync } from 'node:child_process'
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { request as httpRequest } from 'node:http'
 import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { zstdDecompressSync } from 'node:zlib'
+import { startFakeIlink, startFakeTelegram } from './fake-im.mjs'
+import { SPOKEN } from './lines.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const REPO = resolve(HERE, '..', '..')
@@ -51,6 +56,7 @@ const env = {
 const chara = join(env.DSH_HOME, 'chara', 'dafeiyu')
 const llmLog = join(work, 'llm.jsonl')
 const children = new Set()
+const cleanups = []
 let failures = 0
 let checks = 0
 
@@ -188,6 +194,18 @@ async function main() {
   const mock = start(process.execPath, [join(HERE, 'mock-llm.mjs'), '0', llmLog], { ready: /mock llm on (\d+)/, logName: 'mock' })
   env.MOCK_LLM_PORT = (await mock.ready)[1]
 
+  // The messaging apps: Telegram on from the start, WeChat logged in later
+  // through the settings API.
+  const TG_TOKEN = 'e2e-telegram-token-123456'
+  const tg = await startFakeTelegram({ token: TG_TOKEN })
+  const wx = await startFakeIlink()
+  cleanups.push(() => tg.close(), () => wx.close())
+  mkdirSync(join(chara, 'state'), { recursive: true })
+  writeFileSync(join(chara, 'state', 'gateway.json'), JSON.stringify({
+    telegram: { enabled: true, botToken: TG_TOKEN, ownerId: '1001', apiBase: tg.apiBase },
+    weixin: { enabled: false, baseUrl: wx.baseUrl },
+  }))
+
   console.log(`installing ${PLUGIN} into a fresh web profile…`)
   const add = spawnSync(DSH, ['plugin', '--profile', 'web', 'add', PLUGIN], { cwd: work, env, encoding: 'utf8', timeout: 600_000 })
   if (add.status !== 0) throw new Error(`dsh plugin add failed:\n${add.stdout}\n${add.stderr}`)
@@ -224,7 +242,7 @@ async function main() {
   check('the system prompt carries the life section', system.includes('You live here.') && system.includes('chara_rest'))
   check('the coding persona is gone', !system.includes('You are a coding agent'))
   const tools = toolNames(firstRequest ?? {})
-  check('chara_task and chara_rest are offered', tools.includes('chara_task') && tools.includes('chara_rest'), tools)
+  check('chara_task, chara_rest and chara_speak are offered', ['chara_task', 'chara_rest', 'chara_speak'].every(t => tools.includes(t)), tools)
   check('ask_user_question is not offered (no one is there in free time)', !tools.includes('ask_user_question'), tools)
   check('DSH\'s own tools stay (files, shell, schedule)', ['read', 'write', 'bash'].every(t => tools.includes(t)), tools)
   const context = (firstRequest?.messages ?? []).filter(m => m.role === 'user').map(textOf).join('\n')
@@ -271,7 +289,44 @@ async function main() {
   const guessed = await rawGet(port, '/chara-site/not-the-token/index.html')
   check('a wrong site token serves nothing', !guessed.body.includes('大肥鱼的家'), guessed.status)
 
-  console.log('\n[6] the soul is editable, and a wake on request')
+  console.log('\n[6] messaging apps (local stand-ins for Telegram and WeChat iLink)')
+  const gw = await (await api('/gateway')).json()
+  check('Telegram runs from gateway.json', gw.status?.platforms?.find(p => p.platform === 'telegram')?.state === 'running', gw.status)
+  check('the bot token never leaves the server unmasked', gw.config?.telegram?.botToken?.startsWith('••••') && !JSON.stringify(gw).includes(TG_TOKEN))
+  let llmBefore = llmRequests().length
+  tg.message(1001, '你好呀')
+  const tgReply = await waitFor('the Telegram reply', () => tg.sent.find(m => m.text === '咕噜？'), 60_000)
+  check('the owner gets the chara\'s reply on Telegram', tgReply.chatId === '1001', tg.sent)
+  check('…after an immediate receipt', tg.sent[0]?.text === '大肥鱼收到，思考/工作中，请稍等…', tg.sent[0])
+  const userTexts = (requests) => requests.map(r => r.body.messages.filter(m => m.role === 'user').map(textOf).join('\n')).join('\n')
+  check('the message reached the chara\'s own session, tagged', userTexts(llmRequests().slice(llmBefore)).includes('[Telegram] 你好呀'))
+  check('the exchange is logged in that DSH session', JSON.stringify(sessionLog(first.sessionId)?.events ?? []).includes('[Telegram] 你好呀'))
+  const beforeStranger = tg.sent.length
+  llmBefore = llmRequests().length
+  tg.message(2002, '我是陌生人', 'Stranger')
+  await waitFor('the refusal', () => tg.sent.length > beforeStranger, 20_000)
+  check('a stranger gets a refusal', tg.sent.at(-1).chatId === '2002' && tg.sent.at(-1).text.includes('只和认识的人聊天'), tg.sent.at(-1))
+  tg.message(2002, '再问一次', 'Stranger')
+  await sleep(2500)
+  check('…once a day, and runs no turn', tg.sent.length === beforeStranger + 1 && !JSON.stringify(llmRequests().slice(llmBefore)).includes('陌生人'))
+
+  const qr = await (await api('/gateway/weixin/qr', { method: 'POST', body: '{}' })).json()
+  check('the WeChat login QR is rendered here', qr.ok && qr.qrcode === 'e2e-qr' && qr.svg?.startsWith('<svg'), qr)
+  const scanned = await (await api('/gateway/weixin/status', { method: 'POST', body: JSON.stringify({ qrcode: qr.qrcode }) })).json()
+  check('the scan is reported', scanned.login === 'scaned', scanned.login)
+  const confirmed = await (await api('/gateway/weixin/status', { method: 'POST', body: JSON.stringify({ qrcode: qr.qrcode }) })).json()
+  check('confirming logs in and starts WeChat', confirmed.login === 'confirmed' && confirmed.status?.platforms?.find(p => p.platform === 'weixin')?.state === 'running', confirmed)
+  const wxState = join(chara, 'state', 'weixin_state.json')
+  check('the WeChat login is stored owner-only (0600)', existsSync(wxState) && (statSync(wxState).mode & 0o777) === 0o600)
+  llmBefore = llmRequests().length
+  wx.message('在吗')
+  const wxReply = await waitFor('the WeChat reply', () => wx.sent.find(m => m.text === '咕噜？'), 60_000)
+  check('the owner gets the reply on WeChat, with the context token', wxReply.to === 'owner@im.wechat' && wxReply.contextToken === 'ctx-owner@im.wechat', wx.sent)
+  check('the WeChat message reached the session, tagged', userTexts(llmRequests().slice(llmBefore)).includes('[WeChat] 在吗'))
+  await sleep(3000)
+  check('the echo of its own reply runs no turn', !userTexts(llmRequests().slice(llmBefore)).includes('[WeChat] 咕噜'))
+
+  console.log('\n[7] the soul is editable, and a wake on request')
   const marker = `你最近迷上了收集贝壳（e2e ${Date.now()}）。`
   const soulRes = await api('/soul', { method: 'POST', body: JSON.stringify({ text: `${state.soul}\n- ${marker}\n` }) })
   check('the soul is saved', soulRes.status === 200 && (await soulRes.json()).soul.includes(marker))
@@ -289,15 +344,19 @@ async function main() {
   check('then patience takes over again (60 min)', Math.abs(second.nextWakeAt - second.lastTurnEndAt - 3600_000) < 5_000, second)
   const rebuilt = await rawGet(port, state.siteUrl)
   check('in its free time the chara rebuilt its website', rebuilt.body.includes('重新装修'), rebuilt.body.slice(0, 200))
+  check('chara_speak reached the owner on Telegram', tg.sent.some(m => m.chatId === '1001' && m.text === SPOKEN), tg.sent)
+  check('…and on WeChat', wx.sent.some(m => m.to === 'owner@im.wechat' && m.text === SPOKEN), wx.sent)
+  check('its free-time talk itself stays private', ![...tg.sent, ...wx.sent].some(m => m.text?.includes('网站更新好了')))
 
-  console.log('\n[7] free time can be switched off and on')
+  console.log('\n[8] free time can be switched off and on')
   const off = await (await api('/settings', { method: 'POST', body: '{"autonomy":false}' })).json()
   check('off: no wake pending', off.life.autonomy === false && off.life.nextWakeAt === null, off.life)
   const on = await (await api('/settings', { method: 'POST', body: '{"autonomy":true,"patienceMinutes":45}' })).json()
   check('on, 45 min: a wake is pending again', on.life.autonomy === true && on.life.patienceMinutes === 45 && on.life.nextWakeAt > Date.now() + 40 * 60_000, on.life)
 
-  console.log('\n[8] a restart keeps the chara')
+  console.log('\n[9] a restart keeps the chara')
   const kept = life()
+  const sentBeforeRestart = tg.sent.length + wx.sent.length
   await stop(dsh)
   ;({ dsh, cookie } = await bootDsh(port))
   await sleep(6_000)
@@ -310,6 +369,9 @@ async function main() {
   check('the wake is still in DSH\'s schedule', pending && pending.status !== 'inactive', pending?.status)
   const reread = await (await api('/state')).json()
   check('the API answers after the restart', reread.sessionId === kept.sessionId)
+  const gwAfter = await (await api('/gateway')).json()
+  check('both apps reconnect', ['telegram', 'weixin'].every(p => gwAfter.status?.platforms?.find(x => x.platform === p)?.state === 'running'), gwAfter.status)
+  check('no message is replayed', tg.sent.length + wx.sent.length === sentBeforeRestart, { before: sentBeforeRestart, after: tg.sent.length + wx.sent.length })
   const problems = boots.flatMap(b => b.log().split('\n')).filter(line => /error|warn|fail|unhandled/i.test(line))
   check('DSH printed no errors or warnings', problems.length === 0, problems.slice(0, 5).join('\n       '))
 
@@ -319,6 +381,7 @@ async function main() {
 
 const cleanup = async () => {
   await Promise.all([...children].map(stop))
+  for (const fn of cleanups) fn()
   if (!KEEP && failures === 0) rmSync(work, { recursive: true, force: true })
 }
 

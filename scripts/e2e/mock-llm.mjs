@@ -11,7 +11,8 @@
 //     tool result comes back) call chara_rest, then answer with a short line;
 //   - contains 【自由时间 (a later wake) or 更新网站 (the user asks): read, then
 //     rewrite site/index.html with DSH's file tools (DSH refuses to overwrite a
-//     file the session has not read), then answer;
+//     file the session has not read); in free time also tell the user with
+//     chara_speak; then answer;
 //   - contains 改人格: try to write ../soul/soul.md (outside the home: the
 //     workspace sandbox must refuse it);
 //   - anything else: answer with a short line.
@@ -20,6 +21,7 @@
 // Prints "mock llm on <port>" once listening (port 0 picks a free one).
 import { createServer } from 'node:http'
 import { appendFileSync } from 'node:fs'
+import { NEW_SITE, SPOKEN } from './lines.mjs'
 
 const [port, logPath] = process.argv.slice(2)
 let seq = 0
@@ -29,9 +31,6 @@ function textOf(message) {
   if (Array.isArray(message?.content)) return message.content.map(p => p?.text ?? '').join('')
   return ''
 }
-
-export const NEW_SITE = '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><link rel="stylesheet" href="./style.css"><title>大肥鱼的家</title></head>'
-  + '<body><main><img class="avatar" src="./avatar.png" alt=""><h1>大肥鱼的家 · 重新装修</h1><p class="lead">今天把网站收拾成了自己的样子。</p></main></body></html>'
 
 function isRuntimeNote(m) {
   const text = textOf(m)
@@ -53,6 +52,7 @@ function plan(body) {
     // DSH refuses to overwrite a file the session has not read first.
     if (toolsThisTurn === 0) return { tool: { name: 'read', args: { file_path: 'site/index.html' } } }
     if (toolsThisTurn === 1) return { tool: { name: 'write', args: { file_path: 'site/index.html', content: NEW_SITE } } }
+    if (toolsThisTurn === 2 && said.includes('【自由时间')) return { tool: { name: 'chara_speak', args: { text: SPOKEN } } }
     return { text: '网站更新好了，去小窝看看。' }
   }
   if (said.includes('改人格')) {

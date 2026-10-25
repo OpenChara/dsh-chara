@@ -42,6 +42,9 @@ Apache-2.0.
 - 设计（理想 → 任务 → todo 三层目标、patience / rest 作息、个人网站模块、
   中立的生活规则）移植自 OpenChara/OpenCharaAgent（Apache-2.0），只改写成
   DSH 插件的形态，没有搬运它的 harness。
+- 消息网关（`src/gateway/`：微信 iLink、Telegram、QQ OneBot 适配器，访问控制、
+  分段、静音过滤和中继）由 OpenCharaAgent 的 `chara/messaging/` 与
+  `chara/server/messaging_host.py` 改写成 JavaScript，接到 DSH 的会话 API 上。
 - 插件的结构（bundle patch、agent preset、client 注入）遵循 DSH 0.2.1-rc.2 的
   公开插件约定。不引入任何 `@deepseek-ai/*` 包，DSH 的服务全部通过 Cordis
   上下文获得。
@@ -52,5 +55,45 @@ Apache-2.0.
   the personal-website module, the neutral life rules) is ported from
   OpenChara/OpenCharaAgent (Apache-2.0), reshaped as a DSH plugin, without
   porting its harness.
+- The messaging gateway (`src/gateway/`: the WeChat iLink, Telegram and QQ
+  OneBot adapters, access control, splitting, the silence filter and the relay)
+  is OpenCharaAgent's `chara/messaging/` and `chara/server/messaging_host.py`
+  rewritten in JavaScript on top of DSH's session API.
 - The plugin follows DSH 0.2.1-rc.2's public plugin conventions and imports no
   `@deepseek-ai/*` package; every DSH service comes through the Cordis context.
+
+## 第三方代码 · Third-party code
+
+`src/vendor/qrcode-generator.mjs`：qrcode-generator 2.0.4（`dist/qrcode.mjs`，
+原样收录），用来在本机生成微信登录二维码，不经过任何第三方二维码服务。
+"QR Code" 是 DENSO WAVE INCORPORATED 的注册商标。
+
+`src/vendor/qrcode-generator.mjs` is qrcode-generator 2.0.4 (`dist/qrcode.mjs`,
+unmodified), used to draw the WeChat login QR code locally, without any
+third-party QR image service. "QR Code" is a registered trademark of DENSO WAVE
+INCORPORATED.
+
+```
+QR Code Generator for JavaScript
+Copyright (c) 2009 Kazuhiko Arase
+URL: http://www.d-project.com/
+Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```

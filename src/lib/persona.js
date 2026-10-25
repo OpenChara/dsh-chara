@@ -32,5 +32,8 @@ export function loadPersona(id) {
   if (!/^[\w.-]+$/.test(avatar) || !AVATAR_TYPES[extname(avatar).toLowerCase()] || !existsSync(join(dir, avatar))) {
     throw new Error(`persona ${id}: avatar must be a PNG, SVG, JPEG or WebP file in its folder (got ${JSON.stringify(avatar)})`)
   }
+  if (persona.gateway !== undefined && (typeof persona.gateway !== 'object' || Object.values(persona.gateway).some(v => typeof v !== 'string'))) {
+    throw new Error(`persona ${id}: gateway must map message names to text`)
+  }
   return { ...persona, avatar, dir }
 }

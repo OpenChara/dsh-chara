@@ -45,6 +45,15 @@ plugin manager.
 - The model-facing life text (`src/lib/prompts.js`) is neutral guidance about
   how this place works, not values. The chara's identity comes only from
   `soul.md`.
+- The messaging gateway (`src/gateway/`) is a port of OpenCharaAgent's
+  `chara/messaging/` + `server/messaging_host.py`; keep its rules when you
+  change it: one session for every app (messages go in through
+  `sessionController.prompt`), only the reply of a turn that answers a message
+  goes back out, free time stays private except `chara_speak`, owner-only by
+  default, a stranger never starts a turn, and a failed delivery is logged,
+  never faked. `scripts/e2e/fake-im.mjs` stands in for Telegram and iLink.
+  `gateway.json` and `*_state.json` hold tokens: mode 0600, never echoed
+  unmasked by the API.
 - `cordis.patch.yml` copies DSH's standard preset. When DSH updates, re-check
   it against `dsh-web-app/presets/standard.patch.yml`.
 - The avatar (`personas/dafeiyu/avatar.png`) is CC BY-NC-SA 4.0 community art,

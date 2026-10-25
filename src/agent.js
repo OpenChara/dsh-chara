@@ -5,6 +5,7 @@
 // No @deepseek-ai/* imports, on purpose: everything comes through ctx, so the
 // plugin activates on every profile (the desktop profile does not install
 // optional peers).
+import { gatewayFor } from './gateway/registry.js'
 import { readText } from './lib/fsutil.js'
 import { seedChara } from './lib/home.js'
 import { localTime, sharedLife, MIN_REST, MAX_REST } from './lib/life.js'
@@ -25,7 +26,7 @@ const NOW_CONTEXT_ORDER = 150
 export function apply(ctx, config = {}) {
   const persona = loadPersona(config.persona ?? 'dafeiyu')
   const paths = charaPaths(config.root ?? defaultRoot(), persona.id)
-  seedChara(paths, persona.dir)
+  seedChara(paths, persona.dir, persona.avatar)
   const tasks = new TaskStore(paths.tasks)
   const life = sharedLife(paths.life, { persona })
 
@@ -64,6 +65,7 @@ export function apply(ctx, config = {}) {
 
   ctx.tools.register(taskTool(tasks))
   ctx.tools.register(restTool(life))
+  ctx.tools.register(speakTool(() => gatewayFor(paths.stateDir)))
 }
 
 const JSON_OUTPUT = {
@@ -129,6 +131,36 @@ export function restTool(life, now = () => Date.now()) {
         return { ok: true, note: 'Your free time is switched off, so you will act when your user next writes to you.' }
       }
       return { ok: true, wakeAround: localTime(now() + state.pendingRestSeconds * 1000) }
+    },
+  }
+}
+
+export function speakTool(gateway) {
+  return {
+    name: 'chara_speak',
+    description: [
+      'Say something to your user directly, through the messaging apps they connected (WeChat, Telegram, QQ):',
+      'the one channel that reaches them when they are not looking at this session.',
+      'It is a bid for their attention, so use it when you have something genuinely worth their while;',
+      'attention asked for too often stops being given.',
+      'When a message reached you through an app, your reply in that turn already goes back there.',
+    ].join(' '),
+    parameters: {
+      type: 'object',
+      properties: { text: { type: 'string', description: 'What to say to your user.' } },
+      required: ['text'],
+      additionalProperties: false,
+    },
+    output: JSON_OUTPUT,
+    async execute(args) {
+      const text = String(args?.text ?? '').trim()
+      if (!text) throw new Error('text is empty')
+      const results = (await gateway()?.speak(text)) ?? []
+      if (results.length === 0) {
+        return { delivered: [], note: 'No messaging app is connected, so this reached no one outside this session; your user will see it here.' }
+      }
+      const failed = results.filter(r => !r.ok).map(r => ({ app: r.label, reason: r.detail }))
+      return { delivered: results.filter(r => r.ok).map(r => r.label), ...(failed.length ? { failed } : {}) }
     },
   }
 }

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- 消息网关（移植自 OpenCharaAgent）：在微信（ClawBot / iLink，设置里扫码登录）、
+  Telegram、QQ（NapCat / Lagrange 的 OneBot）上都能找到大肥鱼。所有应用共用它
+  的那一个会话，回复发回原处；新工具 `chara_speak` 让它主动找你；默认只认你本人，
+  陌生人每天一次婉拒。设置 → 大肥鱼 → 消息网关。
+  Messaging gateway (ported from OpenCharaAgent): WeChat, Telegram and QQ into
+  the chara's one session, `chara_speak` to reach you, owner-only by default.
 - 头像换成社区鲸鱼娘（裁自 xiaoweigen/deepseek-dafeiyu-assets 的 Q 版设定图，
   CC BY-NC-SA 4.0，仅限非商业使用），署名链和上游许可见
   `personas/dafeiyu/ART-LICENSE.md`；代码仍是 Apache-2.0。

@@ -3,6 +3,7 @@
 //   * makes sure the chara has its own session, in a workspace that is its home;
 //   * keeps the life loop's next wake armed through DSH's schedule service and
 //     re-arms it whenever a turn in that session ends;
+//   * runs the messaging gateway (WeChat, Telegram, QQ) into that session;
 //   * serves the client's JSON API (/api/chara) and the chara's website
 //     (/chara-site/<token>/), read-only and sandboxed.
 // Each concern waits only for the services it needs, so a profile without a web
@@ -12,6 +13,9 @@
 import { randomBytes } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { extname, join } from 'node:path'
+import { GatewayHost } from './gateway/host.js'
+import { qrSvg } from './gateway/qr.js'
+import { registerGateway } from './gateway/registry.js'
 import { atomicWrite, readText } from './lib/fsutil.js'
 import { seedChara, serveSiteFile } from './lib/home.js'
 import { clamp, sharedLife, MIN_PATIENCE, MAX_PATIENCE } from './lib/life.js'
@@ -45,6 +49,7 @@ export function apply(ctx, config = {}) {
 
   let disposed = false
   ctx.effect(() => () => { disposed = true }, 'dsh-chara: lifetime')
+  let gateway = null
 
   ctx.inject(['schedule', 'sessionController', 'workspaceRegistry', 'agentPresets'], (sctx) => {
     life.scheduler = {
@@ -52,9 +57,32 @@ export function apply(ctx, config = {}) {
       delete: (sessionId, id) => sctx.schedule.delete({ sessionId, id }),
       list: (sessionId) => sctx.schedule.list({ sessionId }),
     }
+    const host = new GatewayHost({
+      stateDir: paths.stateDir,
+      persona,
+      sessionId: () => life.state().sessionId,
+      prompt: (request) => sctx.sessionController.prompt(request, new AbortController().signal),
+      log,
+      warn,
+    })
+    sctx.effect(() => {
+      gateway = host
+      const unregister = registerGateway(paths.stateDir, host)
+      host.reconcile()
+      return () => {
+        unregister()
+        host.stop()
+        if (gateway === host) gateway = null
+      }
+    }, 'dsh-chara: gateway')
     sctx.on('session/event', (session, event) => {
       const { sessionId } = life.state()
       if (!sessionId || session?.id !== sessionId) return
+      try {
+        host.onSessionEvent(event)
+      } catch (err) {
+        warn(`gateway: ${err?.message ?? err}`)
+      }
       if (event?.type === 'turn/end') {
         life.onTurnEnd().catch(err => warn(`could not re-arm the next wake: ${err?.message ?? err}`))
       } else if (event?.type === 'user/message' && event.data?.source?.kind === 'schedule') {
@@ -159,6 +187,7 @@ export function apply(ctx, config = {}) {
     const { pathname } = new URL(req.url ?? '/', 'http://localhost')
     const route = pathname.slice(API.length) || '/'
     if (req.method === 'GET' && route === '/state') return sendJson(res, 200, stateView())
+    if (route === '/gateway' || route.startsWith('/gateway/')) return handleGateway(req, res, route)
     if (req.method === 'GET' && route === '/avatar') {
       const type = AVATAR_TYPES[extname(persona.avatar).toLowerCase()]
       res.writeHead(200, { 'content-type': type, 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' })
@@ -185,6 +214,30 @@ export function apply(ctx, config = {}) {
       if (route === '/soul' && text.trim() === '') return sendJson(res, 400, { ok: false, error: 'the persona cannot be empty' })
       atomicWrite(route === '/soul' ? paths.soul : paths.aspiration, text.endsWith('\n') ? text : `${text}\n`)
       return sendJson(res, 200, stateView())
+    }
+    return sendJson(res, 404, { ok: false, error: 'not found' })
+  }
+
+  async function handleGateway(req, res, route) {
+    if (!gateway) return sendJson(res, 503, { ok: false, error: 'the gateway is not running yet' })
+    if (req.method === 'GET' && route === '/gateway') return sendJson(res, 200, { ok: true, ...gateway.view() })
+    if (req.method !== 'POST') return sendJson(res, 404, { ok: false, error: 'not found' })
+    if (!sameOrigin(req)) return sendJson(res, 403, { ok: false, error: 'cross-origin request refused' })
+    const body = await readJsonBody(req)
+    try {
+      if (route === '/gateway') return sendJson(res, 200, { ok: true, ...gateway.update(body) })
+      if (route === '/gateway/weixin/qr') {
+        const { qrcode, scanContent } = await gateway.weixinQr()
+        return sendJson(res, 200, { ok: true, qrcode, svg: qrSvg(scanContent) })
+      }
+      if (route === '/gateway/weixin/status') {
+        const { status, accountId } = await gateway.weixinQrStatus(String(body.qrcode ?? ''))
+        return sendJson(res, 200, { ok: true, login: status, accountId, ...gateway.view() })
+      }
+      if (route === '/gateway/weixin/logout') return sendJson(res, 200, { ok: true, ...gateway.weixinLogout() })
+    } catch (err) {
+      // An unreachable or refusing platform: say so, never pretend.
+      return sendJson(res, 502, { ok: false, error: err?.message ?? String(err) })
     }
     return sendJson(res, 404, { ok: false, error: 'not found' })
   }
